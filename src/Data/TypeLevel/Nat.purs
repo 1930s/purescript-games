@@ -8,6 +8,9 @@ module Data.TypeLevel.Nat
     -- Converting back to an `Int`
     , class Nat
 
+    -- Arithmetic classes
+    , class Add
+
     -- Predicate classes
     , class NonZero
 
@@ -15,14 +18,17 @@ module Data.TypeLevel.Nat
     , toInt
 
     -- Synonyms
-    , Zero
-    , zero
-    , One
-    , one
-    , Two
-    , two
-    , Three
-    , three
+    , Zero,  zero
+    , One,   one
+    , Two,   two
+    , Three, three
+    , Four,  four
+    , Five,  five
+    , Six,   six
+    , Seven, seven
+    , Eight, eight
+    , Nine,  nine
+    , Ten,   ten
     )
 where
 
@@ -41,13 +47,19 @@ data NProxy (n :: Nat) = NProxy
 
 -- | Converting back to an `Int`.
 class Nat (n :: Nat) where
-    toInt :: NProxy n -> Int
+    toInt   :: NProxy n -> Int
 
 instance natZ :: Nat Z where
-    toInt _ = 0
+    toInt _   = 0
 
 instance natS :: Nat n => Nat (S n) where
-    toInt _ = 1 + toInt (NProxy :: NProxy n)
+    toInt _   = 1 + toInt (NProxy :: NProxy n)
+
+
+-- | Add two type level naturals.
+class Add (a :: Nat) (b :: Nat) (c :: Nat) | a b -> c
+instance addDone :: Add Z b b
+instance addRec  :: Add a b c => Add (S a) b (S c)
 
 
 -- | Test that a `Nat` is greater than zero.
@@ -67,21 +79,34 @@ instance lessThanRec   :: LessThan a b c => LessThan (S a) (S b) c
 
 
 type Zero = Z
-
-zero :: NProxy Zero
-zero = NProxy
+zero = NProxy :: NProxy Zero
 
 type One = S Z
-
-one :: NProxy One
-one = NProxy
+one = NProxy :: NProxy One
 
 type Two = S (S Z)
-
-two :: NProxy Two
-two = NProxy
+two = NProxy :: NProxy Two
 
 type Three = S (S (S Z))
+three = NProxy :: NProxy Three
 
-three :: NProxy Three
-three = NProxy
+type Four = S (S (S (S Z)))
+four = NProxy :: NProxy Four
+
+type Five = S (S (S (S (S Z))))
+five = NProxy :: NProxy Five
+
+type Six = S (S (S (S (S (S Z)))))
+six = NProxy :: NProxy Six
+
+type Seven = S (S (S (S (S (S Z)))))
+seven = NProxy :: NProxy Seven
+
+type Eight = S (S (S (S (S (S Z)))))
+eight = NProxy :: NProxy Eight
+
+type Nine = S (S (S (S (S (S (S Z))))))
+nine = NProxy :: NProxy Nine
+
+type Ten = S (S (S (S (S (S (S (S Z)))))))
+ten = NProxy :: NProxy Ten
