@@ -52,15 +52,15 @@ instance natS :: Nat n => Nat (S n) where
 
 -- | Test that a `Nat` is greater than zero.
 class NonZero (n :: Nat) (b :: Bool) | n -> b
-instance nonZeroYes :: NonZero Z False
-instance nonZeroNo  :: NonZero (S n) True
+instance nonZeroFalse :: NonZero Z False
+instance nonZeroTrue  :: NonZero (S n) True
 
 
 -- | Test that one `Nat` is less than another.
 class LessThan (a :: Nat) (b :: Nat) (c :: Bool) | a b -> c
-instance lessThanYes :: LessThan Z (S b) True
-instance lessThanNo  :: LessThan (S a) Z False
-instance lessThanRec :: LessThan a b c => LessThan (S a) (S b) c
+instance lessThanTrue  :: LessThan Z (S b) True
+instance lessThanFalse :: LessThan (S a) Z False
+instance lessThanRec   :: LessThan a b c => LessThan (S a) (S b) c
 
 
 {- Synonyms -}
