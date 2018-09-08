@@ -7,6 +7,7 @@ module Data.TypeLevel.Nat
 
     -- Converting back to an `Int`
     , class Nat
+    , toInt
 
     -- Arithmetic classes
     , class Add
@@ -15,7 +16,6 @@ module Data.TypeLevel.Nat
     , class NonZero
 
     , class LessThan
-    , toInt
 
     -- Synonyms
     , Zero,  zero

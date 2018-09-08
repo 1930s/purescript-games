@@ -10,8 +10,8 @@ module Data.Rose
 where
 
 import Prelude
-import Data.Foldable (class Foldable, foldMap, foldl, foldr, sum, intercalate)
 import Data.Array as Array
+import Data.Foldable (class Foldable, foldMap, foldl, foldr, sum, intercalate)
 
 
 -- | Rose tree.

@@ -1,6 +1,8 @@
 # `purescript-games`
 
-A little toy project for making board games with purescript. A fun excuse to play with some type level programming.
+A little toy project for implementing board games with purescript.
+
+Mostly an excuse to play with type level programming.
 
 Inspired by:
 

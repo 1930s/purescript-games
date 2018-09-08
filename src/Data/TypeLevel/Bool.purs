@@ -25,8 +25,5 @@ data BProxy (b :: Bool) = BProxy
 class Bool (b :: Bool) where
     toBoolean :: BProxy b -> Boolean
 
-instance boolTrue :: Bool True where
-    toBoolean _ = true
-
-instance boolFalse :: Bool False where
-    toBoolean _ = false
+instance boolTrue  :: Bool True  where toBoolean _ = true
+instance boolFalse :: Bool False where toBoolean _ = false
