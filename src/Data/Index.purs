@@ -7,21 +7,21 @@ where
 
 import Prelude
 import Data.Maybe (Maybe(Just, Nothing))
-import Data.TypeLevel.Nat (kind Nat, class Nat, NProxy)
+import Data.TypeLevel.Nat (kind Nat, class Nat, NProxy(NProxy))
 import Data.TypeLevel.Nat as Nat
 
 
--- | An index is an integer strictly less than some bound.
+-- | An index is an natural strictly less than some bound.
 newtype Index (n :: Nat) = Index Int
 
 derive newtype instance showIndex :: Show (Index n)
 
 
--- | Construct an index that must be less than some bound.
-fromInt :: forall n. Nat n => Int -> NProxy n -> Maybe (Index n)
-fromInt i bound
+-- | Create an index from an integer.
+fromInt :: forall n. Nat n => Int -> Maybe (Index n)
+fromInt i
     | i < 0 = Nothing
-    | i >= Nat.toInt bound = Nothing
+    | i >= Nat.toInt (NProxy :: NProxy n) = Nothing
     | otherwise = Just (Index i)
 
 

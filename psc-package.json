@@ -1,10 +1,6 @@
 {
-  "name": "purescript-games",
-  "set": "psc-0.12.0",
-  "source": "https://github.com/purescript/package-sets.git",
-  "depends": [
-    "prelude",
-    "arrays",
-    "psci-support"
-  ]
+    "name": "purescript-games",
+    "set": "spork",
+    "source": "https://github.com/jmackie/package-sets.git",
+    "depends": ["prelude", "arrays", "spork", "psci-support"]
 }

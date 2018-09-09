@@ -6,6 +6,7 @@ module Data.Rose
     , root
     , firstBranch
     , leaves
+    , leaf
     )
 where
 
@@ -57,3 +58,8 @@ firstBranch (_ :> as) = as
 leaves :: forall a. Rose a -> Array a
 leaves (a :> []) = [a]
 leaves (a :> as) = Array.cons a (foldMap leaves as)
+
+
+-- | Create a leaf element.
+leaf :: forall a. a -> Rose a
+leaf a = a :> []
