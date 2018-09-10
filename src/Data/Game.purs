@@ -37,8 +37,7 @@ data Result p1 p2 = Winner (Either p1 p2) | Draw
 -- | Choose the next move.
 nextMove
     :: forall board p1 p2
-     . Ord board
-    => GameSpec board p1 p2
+     . GameSpec board p1 p2
     -> Int
     -> Either p1 p2
     -> board
@@ -135,7 +134,7 @@ minimum1 = unwrap <<< foldMap1 Min
 
 
 -- | Get the largest elements based on some comparison function.
-maximumsBy :: forall a f. Ord a => Foldable f => (a -> a -> Ordering) -> f a -> Array a
+maximumsBy :: forall a f. Foldable f => (a -> a -> Ordering) -> f a -> Array a
 maximumsBy f = foldl go []
   where go :: Array a -> a -> Array a
         go accum a = case Array.uncons accum of

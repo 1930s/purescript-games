@@ -4,8 +4,8 @@ module Games.TicTacToe.Logic
     , switchPlayer
     , result
     , Player
-    , P1(P1)
-    , P2(P2)
+    , X(X)
+    , O(O)
     , showPlayer
     , Board
     , Position
@@ -35,34 +35,34 @@ import Data.Vec as Vec
 
 
 -- | Player one.
-data P1 = P1
+data X = X
 
-instance showP1 :: Show P1 where show _ = "X"
-instance eqP1 :: Eq P1 where eq _ _ = true
+instance showP1 :: Show X where show _ = "X"
+instance eqP1 :: Eq X where eq _ _ = true
 
 
 -- | Player two.
-data P2 = P2
+data O = O
 
-instance showP2 :: Show P2 where show _ = "0"
-instance eqP2 :: Eq P2 where eq _ _ = true
+instance showP2 :: Show O where show _ = "0"
+instance eqP2 :: Eq O where eq _ _ = true
 
 
 -- | Two player game.
-type Player = Either P1 P2
+type Player = Either X O
 
 
 showPlayer :: Player -> String
 showPlayer = either show show
 
 
-type Result = Game.Result P1 P2
+type Result = Game.Result X O
 
 
 -- | Change players.
 switchPlayer :: Player -> Player
-switchPlayer (Left P1)  = Right P2
-switchPlayer (Right P2) = Left P1
+switchPlayer (Left X)  = Right O
+switchPlayer (Right O) = Left X
 
 
 -- | 3x3 game board.
@@ -89,7 +89,7 @@ type Position = { i :: Index Three, j :: Index Three }
 
 
 -- | Description of the game.
-gameSpec :: GameSpec Board P1 P2
+gameSpec :: GameSpec Board X O
 gameSpec =
     { availableMoves
     , switchPlayer

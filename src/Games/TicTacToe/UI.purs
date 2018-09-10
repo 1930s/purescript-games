@@ -9,6 +9,7 @@ import Data.Either (Either(Right, Left))
 import Data.Functor.Coproduct (Coproduct)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Game (Result(Winner, Draw))
+import Data.Game as Game
 import Data.Index (Index)
 import Data.Int as Int
 import Data.Maybe (Maybe(Just, Nothing), isJust)
@@ -45,37 +46,41 @@ initialModel =
 
 
 user :: TicTacToe.Player
-user = Left TicTacToe.P1
+user = Left TicTacToe.X
 
 
 computer :: TicTacToe.Player
-computer = Right TicTacToe.P2
+computer = Right TicTacToe.O
 
 
 data Action
     = Reset
     | SetDifficulty String
-    | MakeMove TicTacToe.Position TicTacToe.Player
+    | UserMove TicTacToe.Position TicTacToe.Player
+    | ComputerMoved (Maybe TicTacToe.Board)
 
 
 data GameEffect a
-    = NoOp a
+    = ComputerMove Model (Maybe TicTacToe.Board -> a)
 
 
 runGameEffect :: GameEffect ~> Effect
 runGameEffect = case _ of
-    NoOp next ->
-        pure next
+    ComputerMove { board, difficulty: maxDepth } reply ->
+        reply <$> Game.nextMove TicTacToe.gameSpec maxDepth computer board
 
 
 render :: Model -> Html Action
-render { board, result, difficulty } =
+render { board, result, difficulty, busy } =
     H.div []
         [ H.div []
-            [ case result of
-                   Nothing -> H.text ""
-                   Just Draw -> H.text "It's a draw"
-                   Just (Winner winner) -> H.text (show winner <> " wins!")
+            [ if busy
+                 then H.text "Thinking..."
+                 else case result of
+                            Nothing -> H.text ""
+                            Just Draw -> H.text "It's a draw"
+                            Just (Winner winner) ->
+                                H.text (TicTacToe.showPlayer winner <> " wins!")
             ]
         , H.div [ H.classes [ "Board" ] ]
             (Vec.toArray <<< mapWithIndex renderRow <<< unwrap $ board)
@@ -113,7 +118,7 @@ render { board, result, difficulty } =
                     [ "Board__cell"
                     , if isJust result then "Board__cell--disabled" else ""
                     ]
-                , H.onClick (H.always_ (MakeMove { i, j } user))
+                , H.onClick (H.always_ (UserMove { i, j } user))
                 ]
                 [ H.text "" ]
 
@@ -140,23 +145,26 @@ update model (SetDifficulty str) =
             | otherwise ->
                 App.purely model
 
-update model (MakeMove position player) = App.purely model
-{-
-    | model.busy          = model -- NoOp (busy)
-    | isJust model.result = model -- NoOp (game over)
+update model (UserMove position player)
+    | model.busy          = App.purely model -- NoOp (busy)
+    | isJust model.result = App.purely model -- NoOp (game over)
     | otherwise =
-    checkMove (TicTacToe.makeMove position player model.board) \board' ->
-        case TicTacToe.nextMove model.difficulty (TicTacToe.otherPlayer player) board' of
-             Nothing -> init -- wtf?
-             Just board'' ->
-                 checkMove board'' (model { board = _ })
-  where
-    checkMove :: TicTacToe.Board -> (TicTacToe.Board -> Model) -> Model
-    checkMove board f =
-        case TicTacToe.result board of
-             Just result -> model { board = board, result = result }
-             Nothing     -> f board
--}
+    let board' = TicTacToe.makeMove position player model.board in
+    case TicTacToe.result board' of
+            Just result -> App.purely model { board = board', result = Just result }
+            Nothing ->
+                let model' = model { board = board', busy = true } in
+                { model: model'
+                , effects: App.lift (ComputerMove model' ComputerMoved)
+                }
+
+update model (ComputerMoved Nothing) = App.purely model -- wtf
+update model (ComputerMoved (Just board)) =
+    App.purely model
+        { board = board
+        , result = TicTacToe.result board
+        , busy = false
+        }
 
 
 app :: App GameEffect (Const Void) Model Action
