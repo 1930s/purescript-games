@@ -2,5 +2,5 @@
     "name": "purescript-games",
     "set": "spork",
     "source": "https://github.com/jmackie/package-sets.git",
-    "depends": ["prelude", "arrays", "spork", "psci-support"]
+    "depends": ["prelude", "arrays", "spork", "psci-support", "random" ]
 }

@@ -1,7 +1,14 @@
-module Games.TicTacToe.UI where
+module Games.TicTacToe.UI
+    ( main
+    )
+where
 
 import Prelude
+import Data.Const (Const)
+import Data.Either (Either(Right, Left))
+import Data.Functor.Coproduct (Coproduct)
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Game (Result(Winner, Draw))
 import Data.Index (Index)
 import Data.Int as Int
 import Data.Maybe (Maybe(Just, Nothing), isJust)
@@ -11,65 +18,54 @@ import Data.Vec (Vec)
 import Data.Vec as Vec
 import Effect (Effect)
 import Games.TicTacToe.Logic as TicTacToe
+import Spork.App (App)
+import Spork.App as App
 import Spork.Html (Html)
 import Spork.Html as H
-import Spork.PureApp (PureApp)
-import Spork.PureApp as PureApp
-
-
-data Result = Winner TicTacToe.Player | Draw
+import Spork.Interpreter (Interpreter)
+import Spork.Interpreter as Interpreter
+import Spork.Transition (Transition)
 
 
 type Model =
     { board      :: TicTacToe.Board
     , difficulty :: Int
     , busy       :: Boolean
-    , result     :: Maybe Result
+    , result     :: Maybe TicTacToe.Result
     }
 
 
-type Move = { i :: Index Three, j :: Index Three}
+initialModel :: Model
+initialModel =
+    { board: TicTacToe.newGame
+    , difficulty: 5
+    , busy: false
+    , result: Nothing
+    }
+
+
+user :: TicTacToe.Player
+user = Left TicTacToe.P1
+
+
+computer :: TicTacToe.Player
+computer = Right TicTacToe.P2
 
 
 data Action
     = Reset
     | SetDifficulty String
-    | MakeMove Move TicTacToe.Player
+    | MakeMove TicTacToe.Position TicTacToe.Player
 
 
-update :: Model -> Action -> Model
-update model Reset =
-    model { board = TicTacToe.new, result = Nothing }
+data GameEffect a
+    = NoOp a
 
-update model (SetDifficulty str) =
-    case Int.fromString str of
-         Nothing -> model -- NoOp
-         Just int
-            | int > 0 && int <= 10 ->
-                update model { difficulty = int } Reset
-            | otherwise ->
-                model
 
-update model (MakeMove position player)
-    | model.busy          = model -- NoOp (busy)
-    | isJust model.result = model -- NoOp (game over)
-    | otherwise =
-    checkMove (TicTacToe.makeMove position player model.board) \board' ->
-        case TicTacToe.nextMove model.difficulty (TicTacToe.otherPlayer player) board' of
-             Nothing -> init -- wtf?
-             Just board'' ->
-                 checkMove board'' (model { board = _ })
-  where
-    checkMove :: TicTacToe.Board -> (TicTacToe.Board -> Model) -> Model
-    checkMove board f =
-        case TicTacToe.winner board of
-             Just winner ->
-                 model { board = board, result = Just (Winner winner) }
-             Nothing
-                | TicTacToe.draw board ->
-                    model { board = board, result = Just Draw }
-                | otherwise ->
-                    f board
+runGameEffect :: GameEffect ~> Effect
+runGameEffect = case _ of
+    NoOp next ->
+        pure next
 
 
 render :: Model -> Html Action
@@ -117,7 +113,7 @@ render { board, result, difficulty } =
                     [ "Board__cell"
                     , if isJust result then "Board__cell--disabled" else ""
                     ]
-                , H.onClick (H.always_ (MakeMove { i, j } TicTacToe.P2 ))
+                , H.onClick (H.always_ (MakeMove { i, j } user))
                 ]
                 [ H.text "" ]
 
@@ -128,24 +124,50 @@ render { board, result, difficulty } =
                     , "Board__cell--disabled"
                     ]
                 ]
-                [ case player of
-                       TicTacToe.P1 -> H.text "X"
-                       TicTacToe.P2 -> H.text "O"
-                ]
+                [ H.text (TicTacToe.showPlayer player) ]
 
 
-init :: Model
-init =
-    { board: TicTacToe.new
-    , difficulty: 5
-    , busy: false
-    , result: Nothing
-    }
+update :: Model -> Action -> Transition GameEffect Model Action
+update model Reset =
+    App.purely model { board = TicTacToe.newGame, result = Nothing }
+
+update model (SetDifficulty str) =
+    case Int.fromString str of
+         Nothing -> App.purely model -- NoOp
+         Just int
+            | int > 0 && int <= 10 ->
+                update model { difficulty = int } Reset
+            | otherwise ->
+                App.purely model
+
+update model (MakeMove position player) = App.purely model
+{-
+    | model.busy          = model -- NoOp (busy)
+    | isJust model.result = model -- NoOp (game over)
+    | otherwise =
+    checkMove (TicTacToe.makeMove position player model.board) \board' ->
+        case TicTacToe.nextMove model.difficulty (TicTacToe.otherPlayer player) board' of
+             Nothing -> init -- wtf?
+             Just board'' ->
+                 checkMove board'' (model { board = _ })
+  where
+    checkMove :: TicTacToe.Board -> (TicTacToe.Board -> Model) -> Model
+    checkMove board f =
+        case TicTacToe.result board of
+             Just result -> model { board = board, result = result }
+             Nothing     -> f board
+-}
 
 
-app :: PureApp Model Action
-app = { update, render, init }
+app :: App GameEffect (Const Void) Model Action
+app = { render, update, subs: const mempty, init: App.purely initialModel }
 
 
-main ∷ Effect Unit
-main = void (PureApp.makeWithSelector app "#app")
+interpreter :: Interpreter Effect (Coproduct GameEffect (Const Void)) Action
+interpreter = Interpreter.liftNat runGameEffect `Interpreter.merge` Interpreter.never
+
+
+main :: Effect Unit
+main = do
+    inst <- App.makeWithSelector interpreter app "#app"
+    inst.run
